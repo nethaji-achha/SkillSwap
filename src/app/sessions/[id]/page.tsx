@@ -162,9 +162,10 @@ export default function SessionDetailsPage() {
 
       // 3. Connect Signaling WebSocket
       const token = typeof window !== 'undefined' ? localStorage.getItem('skillswap_token') || '' : '';
-      const host = window.location.hostname;
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const wsHost = isLocalhost ? `${window.location.hostname}:8000` : window.location.host;
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//${host}:8000/api/v1/sessions/ws/${sessionId}?token=${token}`;
+      const wsUrl = `${wsProtocol}//${wsHost}/api/v1/sessions/ws/${sessionId}?token=${token}`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;

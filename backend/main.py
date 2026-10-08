@@ -4,12 +4,19 @@ import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-# Ensure root and backend directory are in sys.path for Vercel serverless / container execution
+# Ensure root and backend directory are in sys.path for Vercel services / container execution
 BASE_DIR = Path(__file__).resolve().parent
 ROOT_DIR = BASE_DIR.parent
 for p in (str(ROOT_DIR), str(BASE_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
+
+# When backend service is deployed with root: "backend", alias backend in sys.modules
+if "backend" not in sys.modules:
+    import types
+    backend_mod = types.ModuleType("backend")
+    backend_mod.__path__ = [str(BASE_DIR)]
+    sys.modules["backend"] = backend_mod
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
