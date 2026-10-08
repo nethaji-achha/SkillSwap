@@ -45,7 +45,7 @@ export const Navbar: React.FC = () => {
         {/* Official Logo */}
         <Link href="/" className="flex items-center shrink-0 group">
           <Image
-            src="/skillswap-logo.png"
+            src="https://soulofbeacon.in/skillswaplogo.jpeg"
             alt="Skill Swap"
             width={160}
             height={80}
