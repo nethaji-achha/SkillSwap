@@ -48,27 +48,40 @@ async def lifespan(app: FastAPI):
     Application startup/shutdown lifecycle.
     Initializes SQL & MongoDB connections when the API starts.
     """
-    uploads_path = os.path.join(os.path.dirname(__file__), "uploads", "avatars")
-    os.makedirs(uploads_path, exist_ok=True)
+    is_vercel = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    base_uploads = "/tmp" if is_vercel else os.path.dirname(__file__)
+    uploads_path = os.path.join(base_uploads, "uploads", "avatars")
+    try:
+        os.makedirs(uploads_path, exist_ok=True)
+    except Exception:
+        pass
     
     # 1. Initialize Relational Database (SQLAlchemy)
-    db = SessionLocal()
     try:
-        init_db(db)
-        logger.info("SQL database initialized successfully")
+        db = SessionLocal()
+        try:
+            init_db(db)
+            logger.info("SQL database initialized successfully")
+        except Exception:
+            logger.exception("SQL database initialization warning")
+        finally:
+            db.close()
     except Exception:
-        logger.exception("SQL database initialization failed")
-        raise
-    finally:
-        db.close()
+        logger.exception("SQL database connection warning during startup")
 
     # 2. Initialize Document Database (MongoDB)
-    await connect_to_mongo()
+    try:
+        await connect_to_mongo()
+    except Exception as e:
+        logger.warning(f"MongoDB connection skipped: {e}")
 
     yield
 
     # Teardown
-    await close_mongo_connection()
+    try:
+        await close_mongo_connection()
+    except Exception:
+        pass
     logger.info("Skill Swap API shutting down")
 
 
@@ -87,9 +100,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
-os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+is_vercel_env = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+uploads_dir = os.path.join("/tmp" if is_vercel_env else os.path.dirname(__file__), "uploads")
+try:
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+except Exception as e:
+    logger.warning(f"Static uploads mount skipped: {e}")
 
 
 # ---------------------------------------------------------
@@ -98,12 +115,7 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

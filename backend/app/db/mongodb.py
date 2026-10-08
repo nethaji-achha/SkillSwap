@@ -1,13 +1,21 @@
 import logging
-from typing import Optional
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from typing import Optional, Any
+
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+    HAS_MOTOR = True
+except ImportError:
+    AsyncIOMotorClient = Any  # type: ignore
+    AsyncIOMotorDatabase = Any  # type: ignore
+    HAS_MOTOR = False
+
 from backend.app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 class MongoDBManager:
-    client: Optional[AsyncIOMotorClient] = None
-    db: Optional[AsyncIOMotorDatabase] = None
+    client: Optional[Any] = None
+    db: Optional[Any] = None
 
 mongodb_manager = MongoDBManager()
 
@@ -15,6 +23,9 @@ async def connect_to_mongo():
     """
     Initialize asynchronous MongoDB connection pool.
     """
+    if not HAS_MOTOR:
+        logger.info("Motor package not installed. Skipping MongoDB connection.")
+        return
     try:
         logger.info(f"Connecting to MongoDB at {settings.MONGODB_URL}...")
         mongodb_manager.client = AsyncIOMotorClient(

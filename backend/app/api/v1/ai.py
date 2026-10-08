@@ -3,9 +3,8 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from backend.app.db.session import get_db
-from backend.app.db.mongodb import get_mongo_db
+from backend.app.db.mongodb import get_mongo_db, AsyncIOMotorDatabase
 from backend.app.core.config import settings
 from backend.app.models.all_models import User, UserSubscription, AIUsage, SubscriptionPlan
 from backend.app.schemas.all_schemas import AIRoadmapRequest, AIPricingRequest

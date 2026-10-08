@@ -11,8 +11,14 @@ from backend.app.api.v1.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users & Profiles"])
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "uploads", "avatars")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+def get_upload_dir() -> str:
+    base = "/tmp" if (os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME")) else os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    upload_path = os.path.join(base, "uploads", "avatars")
+    try:
+        os.makedirs(upload_path, exist_ok=True)
+    except Exception:
+        pass
+    return upload_path
 
 @router.post("/upload-avatar")
 async def upload_avatar(
@@ -31,7 +37,8 @@ async def upload_avatar(
     if not ext:
         ext = ".jpg"
     unique_filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    upload_dir = get_upload_dir()
+    file_path = os.path.join(upload_dir, unique_filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

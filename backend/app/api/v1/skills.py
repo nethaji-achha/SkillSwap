@@ -16,15 +16,38 @@ router = APIRouter(prefix="/skills", tags=["Skills, Badges & Assessments"])
 
 @router.get("/categories")
 def get_categories(db: Session = Depends(get_db)):
-    categories = db.query(SkillCategory).all()
+    try:
+        categories = db.query(SkillCategory).all()
+        if not categories:
+            from backend.app.db.init_db import init_db
+            init_db(db)
+            categories = db.query(SkillCategory).all()
+
+        if categories:
+            return [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "slug": c.slug,
+                    "description": c.description,
+                    "icon": c.icon
+                } for c in categories
+            ]
+    except Exception:
+        pass
+
+    # Safe fallback default categories
     return [
-        {
-            "id": c.id,
-            "name": c.name,
-            "slug": c.slug,
-            "description": c.description,
-            "icon": c.icon
-        } for c in categories
+        {"id": "cat-1", "name": "Programming", "slug": "programming", "description": "Software architecture, backend, mobile & algorithms", "icon": "Code"},
+        {"id": "cat-2", "name": "Web Development", "slug": "web-dev", "description": "Frontend, full-stack, Next.js, React, Node.js", "icon": "Globe"},
+        {"id": "cat-3", "name": "AI & Machine Learning", "slug": "ai-ml", "description": "LLMs, PyTorch, prompt engineering, data science", "icon": "Cpu"},
+        {"id": "cat-4", "name": "UI/UX & Product Design", "slug": "ui-ux", "description": "Figma, user research, wireframing, design systems", "icon": "Layers"},
+        {"id": "cat-5", "name": "Marketing & Growth", "slug": "marketing", "description": "SEO, performance marketing, content strategy, copy", "icon": "TrendingUp"},
+        {"id": "cat-6", "name": "Business & Strategy", "slug": "business", "description": "Product management, startups, pitch decks, finance", "icon": "Briefcase"},
+        {"id": "cat-7", "name": "Photography & Video", "slug": "media", "description": "Editing, DaVinci Resolve, lighting, cinematography", "icon": "Video"},
+        {"id": "cat-8", "name": "Languages", "slug": "languages", "description": "English, Spanish, French, German, Japanese, Mandarin", "icon": "Languages"},
+        {"id": "cat-9", "name": "Music & Audio", "slug": "music", "description": "Production, guitar, piano, mixing & mastering", "icon": "Music"},
+        {"id": "cat-10", "name": "Career Development", "slug": "career", "description": "Resume reviews, interview prep, leadership coaching", "icon": "Award"}
     ]
 
 @router.get("/my-skills")

@@ -34,6 +34,16 @@ export const Avatar: React.FC<AvatarProps> = ({
     xl: 'w-3.5 h-3.5 bottom-1 right-1 ring-2 ring-white',
   };
 
+  const isValidSrc =
+    Boolean(src) &&
+    typeof src === 'string' &&
+    src.trim() !== '' &&
+    src.trim() !== 'image' &&
+    (src.startsWith('http://') ||
+      src.startsWith('https://') ||
+      src.startsWith('/') ||
+      src.startsWith('data:image/'));
+
   return (
     <div className="relative inline-block shrink-0">
       <div
@@ -43,7 +53,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           className
         )}
       >
-        {src && !imgError ? (
+        {isValidSrc && !imgError ? (
           <img
             src={src}
             alt={name}

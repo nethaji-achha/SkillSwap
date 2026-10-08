@@ -3,9 +3,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from backend.app.db.session import get_db
-from backend.app.db.mongodb import get_mongo_db
+from backend.app.db.mongodb import get_mongo_db, AsyncIOMotorDatabase
 from backend.app.models.all_models import User, Message, Notification
 from backend.app.schemas.all_schemas import MessageCreate
 from backend.app.api.v1.deps import get_current_user

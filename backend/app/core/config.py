@@ -2,6 +2,17 @@ import os
 from typing import List
 from pydantic_settings import BaseSettings
 
+def get_default_db_url() -> str:
+    db = os.getenv("DATABASE_URL")
+    if db:
+        if db.startswith("postgres://"):
+            return db.replace("postgres://", "postgresql://", 1)
+        return db
+    # On Vercel / serverless lambda, the root filesystem is read-only except /tmp
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        return "sqlite:////tmp/skillswap.db"
+    return "sqlite:///./skillswap.db"
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "skill-swap")
     PROJECT_ID: str = os.getenv("PROJECT_ID", "6ac7709ac8a34010060c5a71")
@@ -13,7 +24,7 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./skillswap.db")
+    DATABASE_URL: str = get_default_db_url()
     MONGODB_URL: str = os.getenv("MONGODB_URL") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/skillswap"
     MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "skillswap")
     
