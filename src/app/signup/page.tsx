@@ -54,7 +54,7 @@ export default function SignUpPage() {
       <div className="text-center space-y-3 mb-8">
           <Link href="/" className="inline-block transition-transform hover:scale-105">
             <Image
-              src="/skillswap-logo.png"
+              src="https://soulofbeacon.in/skillswaplogo.jpeg"
               alt="Skill Swap"
               width={180}
               height={50}
