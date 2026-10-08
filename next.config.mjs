@@ -1,9 +1,17 @@
 /** @type {import('next').NextConfig} */
-const backendApiUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-const backendBaseUrl = backendApiUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+
+const backendApiUrl =
+  process.env.BACKEND_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://127.0.0.1:8000';
+
+const backendBaseUrl = backendApiUrl
+  .replace(/\/+$/, '')
+  .replace(/\/api\/v1$/, '');
 
 const nextConfig = {
   reactStrictMode: true,
+
   async rewrites() {
     return [
       {
@@ -24,6 +32,7 @@ const nextConfig = {
       },
     ];
   },
+
   images: {
     remotePatterns: [
       {
@@ -33,6 +42,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'api.dicebear.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'soulofbeacon.in',
       },
     ],
   },
