@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=skillswap_secret
+      - MONGO_INITDB_DATABASE=skillswap
+    volumes:
+      - mongodb_data:/data/db
+
   backend:
     build:
       context: .
@@ -9,6 +21,8 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./skillswap.db
+      - MONGODB_URL=mongodb://root:skillswap_secret@mongodb:27017/skillswap?authSource=admin
+      - MONGODB_DB_NAME=skillswap
       - JWT_SECRET=super-secret-skillswap-jwt-key-2026-production
       - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
       - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
@@ -16,6 +30,8 @@ services:
     volumes:
       - ./backend:/app/backend
       - skillswap_data:/app/data
+    depends_on:
+      - mongodb
 
   frontend:
     build:
@@ -32,3 +48,5 @@ services:
 
 volumes:
   skillswap_data:
+  mongodb_data:
+

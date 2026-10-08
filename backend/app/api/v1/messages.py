@@ -1,8 +1,11 @@
 from typing import List, Optional
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from backend.app.db.session import get_db
+from backend.app.db.mongodb import get_mongo_db
 from backend.app.models.all_models import User, Message, Notification
 from backend.app.schemas.all_schemas import MessageCreate
 from backend.app.api.v1.deps import get_current_user
@@ -68,10 +71,11 @@ def get_conversation_messages(partner_id: str, current_user: User = Depends(get_
     ]
 
 @router.post("/send")
-def send_message(
+async def send_message(
     msg_in: MessageCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    mongo_db: Optional[AsyncIOMotorDatabase] = Depends(get_mongo_db)
 ):
     receiver = db.query(User).filter(User.id == msg_in.receiver_id).first()
     if not receiver:
@@ -79,6 +83,7 @@ def send_message(
         
     convo_id = get_convo_id(current_user.id, msg_in.receiver_id)
     
+    # 1. Persist in Relational DB
     msg = Message(
         conversation_id=convo_id,
         sender_id=current_user.id,
@@ -101,6 +106,21 @@ def send_message(
     db.commit()
     db.refresh(msg)
     
+    # 2. Persist in MongoDB document store for fast unstructured access & archiving
+    if mongo_db is not None:
+        try:
+            await mongo_db["chat_messages"].insert_one({
+                "message_id": msg.id,
+                "conversation_id": convo_id,
+                "sender_id": current_user.id,
+                "receiver_id": msg_in.receiver_id,
+                "content": msg_in.content,
+                "is_read": False,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+        except Exception:
+            pass
+    
     return {
         "id": msg.id,
         "conversation_id": convo_id,
@@ -109,3 +129,4 @@ def send_message(
         "content": msg.content,
         "created_at": msg.created_at
     }
+

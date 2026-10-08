@@ -3,7 +3,8 @@ from typing import List
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Skill Swap API"
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "skill-swap")
+    PROJECT_ID: str = os.getenv("PROJECT_ID", "6ac7709ac8a34010060c5a71")
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     
@@ -13,6 +14,8 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./skillswap.db")
+    MONGODB_URL: str = os.getenv("MONGODB_URL") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/skillswap"
+    MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "skillswap")
     
     # Security
     JWT_SECRET: str = os.getenv("JWT_SECRET", "super-secret-skillswap-jwt-key-2026-production")
@@ -38,6 +41,8 @@ class Settings(BaseSettings):
 
     class Config:
         case_sensitive = True
-        env_file = ".env"
+        env_file = (".env", ".env.local")
+        extra = "ignore"
+
 
 settings = Settings()

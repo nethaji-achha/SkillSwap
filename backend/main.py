@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.app.core.config import settings
 from backend.app.db.session import SessionLocal
 from backend.app.db.init_db import init_db
+from backend.app.db.mongodb import connect_to_mongo, close_mongo_connection
 
 logger = logging.getLogger(__name__)
 
@@ -45,25 +46,31 @@ from backend.app.api.v1.admin import router as admin_router
 async def lifespan(app: FastAPI):
     """
     Application startup/shutdown lifecycle.
-    Initializes the database when the API starts.
+    Initializes SQL & MongoDB connections when the API starts.
     """
     uploads_path = os.path.join(os.path.dirname(__file__), "uploads", "avatars")
     os.makedirs(uploads_path, exist_ok=True)
     
+    # 1. Initialize Relational Database (SQLAlchemy)
     db = SessionLocal()
-
     try:
         init_db(db)
-        logger.info("Database initialized successfully")
+        logger.info("SQL database initialized successfully")
     except Exception:
-        logger.exception("Database initialization failed")
+        logger.exception("SQL database initialization failed")
         raise
     finally:
         db.close()
 
+    # 2. Initialize Document Database (MongoDB)
+    await connect_to_mongo()
+
     yield
 
+    # Teardown
+    await close_mongo_connection()
     logger.info("Skill Swap API shutting down")
+
 
 
 # ---------------------------------------------------------
